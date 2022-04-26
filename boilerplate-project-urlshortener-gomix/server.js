@@ -16,7 +16,6 @@ app.use(bodyParser.urlencoded({extended:false}))
 
 const URL_SCHEMA = new Schema({
   original_url: {type:String, unique: true},
-  short_url: {type: Number, unique: true}
 })
 
 var urlModel = mongoose.model('urlModel', URL_SCHEMA)
@@ -40,12 +39,20 @@ app.post('/api/shorturl', (req, res)=>{
       res.json({error: 'Invalid url'})
     }
     else{
+      urlModel.exists({original_url: req.body.url}, (err, doc)=>{
+        if(doc) {
+          return res.json({error: 'original URL already exist in database', short_url: doc._id})
+        }
+      })
       const MY_URL = new urlModel({original_url: req.body.url})
       MY_URL.save((err,doc)=>{
-        res.json({
-          original_url: doc.original_url,
-          short_url: doc.id
-        })
+        if(err) return 
+        else{
+          res.json({
+            original_url: doc.original_url,
+            short_url: doc.id
+          })
+        }
       })
     }
   })
